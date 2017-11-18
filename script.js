@@ -1,19 +1,17 @@
 ;(() => {
     var width, height;
 
-    var stop = -1, maxSpeed = 2, speed = 0;
+    var stop = -1, maxSpeed = 1, speed = 0;
 
     var pendulumCount = 3,
         tickDelay = 10,
-        epsilon = 1e-3,
-        animated = false;
-
+        epsilon = 1e-3;
 
     var t = 0,
         theta0 = Math.PI / 3,
         theta = new Array(pendulumCount).fill(theta0),
         omega = new Array(pendulumCount).fill(0),
-        h = 0.5; // 100 throws NaN
+        h = 0.2; // 100 throws NaN
 
     var L = 250,
         R = 20,
@@ -29,7 +27,7 @@
             .map(Function.call, (i) => (i+1)*distance),
         _Y_ = new Array(pendulumCount).fill((height - L) / 2);
 
-    var dataSize = 50,
+    var dataSize = 150,
         plotData = new Array(pendulumCount)
             .fill()
             .map(() => new Array());
@@ -113,11 +111,7 @@
         .attr('r', R);
 
     var force = d3.forceSimulation();
-    /*
     force.on('tick', () => {
-        if (Math.floor(t) % 30 == 0) {
-            console.log(t, theta[0], theta[1], theta[2]);
-        }
         if (speed < maxSpeed) {
             ++speed;
             return;
@@ -129,38 +123,24 @@
         var x = (i) => _X_[i] + L * Math.sin(theta[i]),
             y = (i) => _Y_[i] + L * Math.cos(theta[i]);
 
-        if (animated) {
-            circle.transition().ease('linear').duration(tickDelay)
-                .attr('cx', d => x(d.id))
-                .attr('cy', d => y(d.id));
-            line.transition().ease('linear').duration(tickDelay)
-                .attr('x1', d => _X_[d.target.id])
-                .attr('y1', d => _Y_[d.target.id])
-                .attr('x2', d => x(d.target.id))
-                .attr('y2', d => y(d.target.id));
-        } else {
-            // console.log(plotSvg.selectAll('path'));
-            plot
-                //.data(d => [plotData[d.id]]) // set the new data
-                .attr("d", d => plotLine(plotData[d.id])); // apply the new data values
-            circle
-                .attr('cx', d => x(d.id))
-                .attr('cy', d => y(d.id));
-            line
-                .attr('x1', d => _X_[d.target.id])
-                .attr('y1', d => _Y_[d.target.id])
-                .attr('x2', d => x(d.target.id))
-                .attr('y2', d => y(d.target.id));
-        }
+        plot
+            .attr("d", d => plotLine(plotData[d.id])); // apply the new data values
+        circle
+            .attr('cx', d => x(d.id))
+            .attr('cy', d => y(d.id));
+        line
+            .attr('x1', d => _X_[d.target.id])
+            .attr('y1', d => _Y_[d.target.id])
+            .attr('x2', d => x(d.target.id))
+            .attr('y2', d => y(d.target.id));
 
         if (!(~stop && t >= stop))
             d3.timer(force.restart);//setTimeout(force.restart, tickDelay);
-        /
+        /*
         if (!(~stop && t >= stop) && !d3.event.active)
             force.restart();
-        /
+        */
     });
-    */
     // END d3
 
     /*
@@ -240,13 +220,4 @@
             .attr('y1', d => _Y_[d.target.id])
             .attr('x2', d => _X_[d.target.id]);
     }, false);
-
-    for (i = 0; i < 5000; ++i) {
-        next();
-    }
-
-    for (i = 0; i < 20; ++i) {
-        console.log(t, theta[0], theta[1], theta[2]);
-        next();
-    }
 })();
