@@ -1,36 +1,36 @@
 ;(() => {
-    var width, height;
+    var width, height; // svg dimensions
 
-    var stop = -1, maxSpeed = 1, speed = 0;
+    var stop = -1, // tick to stop (negative for infinite loop)
+        maxSpeed = 1, // step every maxSpeed ticks
+        speed = 0; // current tick
 
-    var pendulumCount = 3,
-        tickDelay = 10,
-        epsilon = 1e-3;
+    var pendulumCount = 3; // number of pendulums
 
-    var t = 0,
-        theta0 = Math.PI / 3,
-        theta = new Array(pendulumCount).fill(theta0),
-        omega = new Array(pendulumCount).fill(0),
-        h = 0.2; // 100 throws NaN
+    var t = 0, // current timestamp (x)
+        theta0 = Math.PI / 3, // initial angle, amplitude
+        theta = new Array(pendulumCount).fill(theta0), // current angles for each pendulum (y)
+        omega = new Array(pendulumCount).fill(0), // current derivative of angle for each pendulum (z=y')
+        h = 0.2; // step
 
-    var L = 250,
-        R = 20,
-        g = 9.8,
-        beta = Math.sqrt(g / L),
-        beta2 = beta * beta;
+    var L = 250, // pendulum length
+        R = 20, // circle radius
+        g = 9.8, // g-constant
+        beta = Math.sqrt(g / L), // equation coefficient
+        beta2 = beta * beta; // beta^2
 
-    setDimensions();
+    setDimensions(); // initialize width and height
 
-    var distance = width / (pendulumCount + 1),
+    var distance = width / (pendulumCount + 1), // distance between pendulums
         _X_ = Array
             .apply(null, { length: pendulumCount })
             .map(Function.call, (i) => (i+1)*distance),
-        _Y_ = new Array(pendulumCount).fill((height - L) / 2);
+        _Y_ = new Array(pendulumCount).fill((height - L) / 2); // joints' coordinates
 
-    var dataSize = 150,
+    var dataSize = 150, // plot length
         plotData = new Array(pendulumCount)
             .fill()
-            .map(() => new Array());
+            .map(() => new Array()); // holds plot for each pendulum
     var circles = [
         { id: 0, color: 'red' },
         { id: 1, color: 'green' },
@@ -41,9 +41,9 @@
         .map(Function.call, (i) => {
             return { target: circles[i] };
         });
-    /*Array.from([0,1,2], i => {return { target: circles[i] };})*/;
 
     // BEGIN d3
+
     var svg = d3.select('body')
         .append('div')
         .classed('svg-container', true)
@@ -52,20 +52,17 @@
         .attr('viewBox', '0 0 ' + width + ' ' + height)
         .classed('svg-content-responsive', true);
 
+    // BEGIN PLOT
+
     var plotSvg = svg
         .append('svg')
-        //.attr('width', '100%')
-        //.attr('height', '100%')
         .attr('preserveAspectRatio', 'xMidYMid meet')
-        .attr('viewBox', '0 0 ' + width + ' ' + height)
-        ;
+        .attr('viewBox', '0 0 ' + width + ' ' + height);
     var plotX = d3.scaleLinear().domain([0, dataSize]).range([0, width]),
         plotY = d3.scaleLinear().domain([-theta0, theta0]).range([0, height]);
     var plotLine = d3.line()
         .x((d,i) => {return plotX(i);})
-        .y((d,i) => {return plotY(d.y);})
-        //.curve('d3.curveLinear');
-        ;
+        .y((d,i) => {return plotY(d.y);});
     var plot = plotSvg.selectAll('path')
         .data(circles)
         .enter()
@@ -74,8 +71,9 @@
         .attr('fill', 'none')
         .attr('stroke', d => d.color)
         .attr('stroke-opacity', '0.3')
-        //.attr('stroke-dasharray', '5,5')
         .attr('stroke-width', '2px');
+
+    // END PLOT
 
     var normal = svg.selectAll('line .dashed')
         .data(links)
@@ -134,16 +132,18 @@
             .attr('x2', d => x(d.target.id))
             .attr('y2', d => y(d.target.id));
 
+        // stop if limit is reached
         if (!(~stop && t >= stop))
-            d3.timer(force.restart);//setTimeout(force.restart, tickDelay);
-        /*
-        if (!(~stop && t >= stop) && !d3.event.active)
-            force.restart();
-        */
+            d3.timer(force.restart);
     });
+
     // END d3
 
-    /*
+    /* Some math.
+     * y'' = f(x,y,z) = -c*sin(y)
+     * .
+     * .
+     * .
      * y' = f1(x,y,z) = z
      * z' = f2(x,y,z) = -c*sin(y)
      */
@@ -153,7 +153,7 @@
 
     function f2(x, y, z) {
         return -beta2 * Math.sin(y);
-        // return -beta2 * y;
+        // return -beta2 * y; // gives much more synchronized with exact formula solution
     }
 
     function next() {
